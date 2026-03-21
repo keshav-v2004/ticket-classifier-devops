@@ -5,5 +5,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
-# Expose ports for both FastAPI and Streamlit
-EXPOSE 8000 8501
+
+# Expose the port FastAPI uses
+EXPOSE 8000
+
+# Tell Render exactly how to start the FastAPI server
+CMD ["uvicorn", "src.api:app", "--host", "0.0.0.0", "--port", "8000"]
