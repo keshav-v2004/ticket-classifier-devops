@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 5s # Check the API every 5 seconds
+
+scrape_configs:
+  - job_name: 'fastapi_app'
+    static_configs:
+      - targets: ['api:8000'] # Docker routing magically finds the API container

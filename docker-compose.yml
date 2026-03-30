@@ -17,3 +17,23 @@ services:
       - API_URL=http://api:8000
     depends_on:
       - api
+
+  # --- NEW DEVOPS INFRASTRUCTURE ---
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    depends_on:
+      - api
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin_password # Secure admin login
+    depends_on:
+      - prometheus

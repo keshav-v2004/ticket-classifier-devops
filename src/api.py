@@ -3,7 +3,8 @@ import logging
 import os
 import uuid
 import requests
-import re
+import re 
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
@@ -11,14 +12,22 @@ import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 from src.storage import storage
 
+# --- APM Observability ---
+from prometheus_fastapi_instrumentator import Instrumentator
+
 # --- DevOps Setup & Configuration ---
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 load_dotenv()
+
+# 1. Initialize FastAPI
 app = FastAPI(title="LLM Ticket Classifier API", version="2.5.0")
 
-# Configure Gemini (Using 2.5 Flash)
+# 2. Initialize Prometheus Metrics
+Instrumentator().instrument(app).expose(app)
+
+# 3. Configure Gemini (Stable SDK)
 API_KEY = os.getenv("GEMINI_API_KEY")
 if API_KEY:
     genai.configure(api_key=API_KEY)
@@ -39,7 +48,7 @@ def trigger_alert(ticket_id: str, category: str, text: str):
     if not webhook_url:
         return
     payload = {
-        "content": f"CRITICAL TICKET ALERT\nID: {ticket_id}\nCategory: {category.upper()}\nIssue: {text[:100]}..."
+        "content": f"🚨 **CRITICAL TICKET ALERT** 🚨\n**ID:** {ticket_id}\n**Category:** {category.upper()}\n**Issue:** {text[:100]}..."
     }
     try:
         requests.post(webhook_url, json=payload)
@@ -79,17 +88,15 @@ def predict_and_store(request: TicketRequest):
         }
         response = model.generate_content(prompt, safety_settings=safety_settings)
         
-        # PROPER JSON EXTRACTION FIX:
-        # Use regex to find the JSON dictionary, ignoring any markdown backticks
+        # Robust Regex JSON Parsing
         raw_text = response.text.strip()
         json_match = re.search(r'\{.*\}', raw_text, re.DOTALL)
         
         if json_match:
-            clean_json_string = json_match.group(0)
-            result = json.loads(clean_json_string)
+            result = json.loads(json_match.group(0))
         else:
-            raise ValueError("No valid JSON found in LLM response.")
-        
+            raise ValueError("No JSON object found in LLM response.")
+            
         category = result.get("category", "general").lower()
         urgency = result.get("urgency", "medium").lower()
         confidence = float(result.get("confidence", 0.90))
@@ -97,7 +104,7 @@ def predict_and_store(request: TicketRequest):
         
     except Exception as e:
         logger.error(f"LLM Error: {e}")
-        category, urgency, confidence, draft = "general", "high", 0.50, "System Error generating response."
+        category, urgency, confidence, draft = "general", "high", 0.50, "System Error. Check terminal logs."
 
     payload = {
         "ticket_id": str(uuid.uuid4())[:8],
