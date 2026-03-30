@@ -7,19 +7,22 @@ import time
 
 st.set_page_config(page_title="Support Portal", layout="wide")
 
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "admin123"
+
 # Point to the FastAPI backend
 API_URL = os.getenv("API_URL", "http://127.0.0.1:8000")
 
 # --- Routing System ---
 st.sidebar.title("Navigation")
-role = st.sidebar.radio("Select Portal:", ["👤 Customer Portal", "🔒 Admin Dashboard"])
+role = st.sidebar.radio("Select Portal:", ["Customer Portal", "Admin Dashboard"])
 st.sidebar.markdown("---")
 
 # ==========================================
 # VIEW 1: THE CUSTOMER PORTAL
 # ==========================================
-if role == "👤 Customer Portal":
-    st.title("📞 Customer Support")
+if role == "Customer Portal":
+    st.title("Customer Support")
     st.write("Describe your issue below. Our intelligent routing system will direct it to the right team immediately.")
     
     # Notice we don't ask the user for a priority level anymore!
@@ -32,7 +35,7 @@ if role == "👤 Customer Portal":
             with st.spinner("Analyzing and routing your ticket..."):
                 try:
                     res = requests.post(f"{API_URL}/predict", json={"ticket_text": text}).json()
-                    st.success(f"✅ Ticket submitted successfully! Your reference ID is **{res['ticket_id']}**.")
+                    st.success(f"Ticket submitted successfully! Your reference ID is **{res['ticket_id']}**.")
                     st.info("Our team has received your request and will follow up via email shortly.")
                 except requests.exceptions.ConnectionError:
                     st.error("API Error. Ensure your backend FastAPI server is running.")
@@ -42,10 +45,26 @@ if role == "👤 Customer Portal":
 # ==========================================
 # VIEW 2: THE ADMIN DASHBOARD
 # ==========================================
-elif role == "🔒 Admin Dashboard":
-    st.title("⚙️ Support Team Workspace")
-    
-    tab1, tab2 = st.tabs(["📊 Live Statistics", "🛠️ Resolution Desk"])
+elif role == "Admin Dashboard":
+    st.title("Support Team Workspace")
+
+    if "admin_authenticated" not in st.session_state:
+        st.session_state["admin_authenticated"] = False
+
+    if not st.session_state["admin_authenticated"]:
+        st.subheader("Admin Login")
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        if st.button("Login"):
+            if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+                st.session_state["admin_authenticated"] = True
+                st.success("Logged in successfully.")
+                st.rerun()
+            else:
+                st.error("Invalid username or password.")
+        st.stop()
+
+    tab1, tab2 = st.tabs(["Live Statistics", "Resolution Desk"])
     
     # --- TAB 1: STATISTICS ---
     with tab1:
@@ -92,18 +111,17 @@ elif role == "🔒 Admin Dashboard":
                 if selected_id:
                     # Find the specific ticket data
                     ticket = next(t for t in history if t['ticket_id'] == selected_id)
-                    
-                    # Display AI insights
-                    urgency_color = "🔴" if ticket.get('urgency') == 'high' else "🟡" if ticket.get('urgency') == 'medium' else "🟢"
-                    st.markdown(f"**Category:** `{ticket.get('category', 'N/A').upper()}` | **Urgency:** {urgency_color} `{ticket.get('urgency', 'N/A').upper()}` | **AI Confidence:** `{ticket.get('confidence', 0)*100}%`")
+
+                    # Display ticket insights without AI confidence
+                    st.markdown(f"**Category:** `{ticket.get('category', 'N/A').upper()}` | **Urgency:** `{ticket.get('urgency', 'N/A').upper()}`")
                     
                     st.info(f"**Customer Message:**\n\n{ticket.get('ticket_text', 'N/A')}")
                     
-                    st.markdown("### 🤖 Auto-Generated Response Draft")
+                    st.markdown("### Auto-Generated Response Draft")
                     edited_draft = st.text_area("Review and Edit before sending:", value=ticket.get('draft_response', 'No draft available.'), height=150)
                     
                     # Action Button
-                    if st.button("✅ Approve & Send Email", type="primary"):
+                    if st.button("Approve & Send Email", type="primary"):
                         try:
                             # 1. Trigger the delete endpoint on the FastAPI backend
                             requests.delete(f"{API_URL}/ticket/{selected_id}")
@@ -111,9 +129,8 @@ elif role == "🔒 Admin Dashboard":
                             # 2. Remove it from the local Streamlit state immediately
                             st.session_state['history'] = [t for t in st.session_state['history'] if t['ticket_id'] != selected_id]
                             
-                            # 3. Celebrate and refresh
+                            # 3. Confirm and refresh
                             st.success(f"Response sent! Ticket {selected_id} resolved and removed from queue.")
-                            st.balloons()
                             time.sleep(2)
                             st.rerun() 
                         except Exception as e:

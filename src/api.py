@@ -39,7 +39,7 @@ def trigger_alert(ticket_id: str, category: str, text: str):
     if not webhook_url:
         return
     payload = {
-        "content": f"🚨 **CRITICAL TICKET ALERT** 🚨\n**ID:** {ticket_id}\n**Category:** {category.upper()}\n**Issue:** {text[:100]}..."
+        "content": f"CRITICAL TICKET ALERT\nID: {ticket_id}\nCategory: {category.upper()}\nIssue: {text[:100]}..."
     }
     try:
         requests.post(webhook_url, json=payload)

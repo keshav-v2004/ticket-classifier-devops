@@ -17,9 +17,9 @@ class StorageHandler:
             self.client.admin.command('ping') 
             self.db = self.client['ticket_classifier']
             self.collection = self.db['tickets']
-            print("✅ Connected to MongoDB Atlas")
+            print("[OK] Connected to MongoDB Atlas")
         except Exception as e:
-            print(f"⚠️ MongoDB connection failed. Falling back to SQLite.")
+            print("[WARN] MongoDB connection failed. Falling back to SQLite.")
             self.use_sqlite = True
             self._init_sqlite()
 
