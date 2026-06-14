@@ -10,6 +10,13 @@ An enterprise-grade, microservices-based AI support automation platform that int
 
 Built with a strong emphasis on **LLMOps**, **Site Reliability Engineering (SRE)**, and **cloud-native distributed systems**, this project demonstrates production-grade backend engineering, automated CI/CD, resilient database handling, and real-time telemetry monitoring.
 
+<img width="1918" height="907" alt="image" src="https://github.com/user-attachments/assets/360cce54-58bf-4bb5-8830-341b9cd20e54" />
+
+---
+
+<img width="1910" height="911" alt="image" src="https://github.com/user-attachments/assets/36ccf585-e5c6-4c1e-977a-5a44c15a5fce" />
+
+
 ---
 
 # 🚀 Key Features
@@ -286,6 +293,9 @@ After successful CI validation:
 - Horizontal autoscaling
 
 ---
+
+
+
 
 # 🌟 Why This Project Stands Out
 
