@@ -16,6 +16,12 @@ Built with a strong emphasis on **LLMOps**, **Site Reliability Engineering (SRE)
 
 <img width="1910" height="911" alt="image" src="https://github.com/user-attachments/assets/36ccf585-e5c6-4c1e-977a-5a44c15a5fce" />
 
+---
+
+# System Design Architecture
+
+<img width="1536" height="1024" alt="llmops-system-design" src="https://github.com/user-attachments/assets/0d80573a-98a8-4446-91db-1d20ad2b6967" />
+
 
 ---
 
